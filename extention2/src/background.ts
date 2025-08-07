@@ -1,47 +1,51 @@
-let currentVideoUrl = '';
+// Define interfaces for messages to ensure type-safe communication
+interface FetchVideoInfoMessage {
+  action: "fetchVideoInfo";
+  videoId: string;
+}
 
-chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
-  if (request.action === 'setVideoUrl') {
-    currentVideoUrl = request.url || '';
-    sendResponse({ status: 'ok' });
-    return true;
-  }
+interface StartDownloadMessage {
+  action: "startDownload";
+  videoId: string;
+  quality: string;
+}
 
-  if (request.action === 'getVideoUrl') {
-    sendResponse({ url: currentVideoUrl });
-    return true;
-  }
-  if (request.action === 'getQualities') {
-    fetch('http://localhost:4000/api/qualities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: request.url }),
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch qualities.');
-        return response.json();
-      })
-      .then(data => {
-        sendResponse({ qualities: data.qualities });
-      })
-      .catch(error => {
-        console.error('Error fetching qualities:', error);
-        sendResponse({ error: 'Failed to get qualities.' });
-      });
-    return true; // Important to keep the message channel alive
-  }
+type ExtensionMessage = FetchVideoInfoMessage | StartDownloadMessage;
 
-  if (request.action === 'downloadVideo') {
-    const { url, formatId } = request;
-    const downloadUrl = `http://localhost:4000/api/download?url=${encodeURIComponent(url)}&formatId=${encodeURIComponent(formatId)}`;
-    chrome.downloads.download({
-      url: downloadUrl,
-      filename: `youtube-video-${formatId}.mp4`,
-      saveAs: true,  // optional: prompts user to choose save location
-    });    
-    sendResponse({ status: 'success' });
-    return true;
-  } 
-  
-  return false;
-});
+chrome.runtime.onMessage.addListener(
+  (message: ExtensionMessage, _, sendResponse) => {
+    if (message.action === "fetchVideoInfo") {
+      const { videoId } = message;
+      // Replace with your actual backend endpoint
+      const backendUrl = `YOUR_BACKEND_URL/api/video-info?videoId=${videoId}`;
+
+      fetch(backendUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          sendResponse({ success: true, videoInfo: data });
+        })
+        .catch((error) => {
+          sendResponse({ success: false, error: error.message });
+        });
+      return true; // Keep the message channel open for sendResponse
+    }
+
+    if (message.action === "startDownload") {
+      const { videoId, quality } = message;
+      // Replace with your actual download endpoint
+      const downloadUrl = `YOUR_BACKEND_URL/api/download?videoId=${videoId}&quality=${quality}`;
+
+      fetch(downloadUrl)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          chrome.downloads.download({ url: url, filename: `${videoId}.mp4` });
+          sendResponse({ success: true });
+        })
+        .catch((error) => {
+          sendResponse({ success: false, error: error.message });
+        });
+      return true;
+    }
+  }
+);
