@@ -3,13 +3,6 @@ interface FetchVideoInfoMessage {
   action: "fetchVideoInfo";
   videoId: string;
 }
-
-interface StartDownloadMessage {
-  action: "startDownload";
-  videoId: string;
-  quality: string;
-}
-
 interface GetVideoUrlMessage {
   action: "getVideoUrl";
 }
@@ -25,14 +18,15 @@ interface DownloadVideoMessage {
   formatId: number;
 }
 
-type ExtensionMessage = FetchVideoInfoMessage | StartDownloadMessage | GetVideoUrlMessage | GetQualitiesMessage | DownloadVideoMessage;
+type ExtensionMessage = FetchVideoInfoMessage  | GetVideoUrlMessage | GetQualitiesMessage | DownloadVideoMessage;
+
+const BACKEND_URL = 'http://localhost:4000';
 
 chrome.runtime.onMessage.addListener(
-  (message: ExtensionMessage, sender, sendResponse) => {
+  (message: ExtensionMessage, _, sendResponse) => {
     console.log('Background received message:', message);
     
     if (message.action === "getVideoUrl") {
-      // Get the current active tab URL
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const currentTab = tabs[0];
         if (currentTab?.url && currentTab.url.includes('youtube.com/watch')) {
@@ -46,105 +40,110 @@ chrome.runtime.onMessage.addListener(
 
     if (message.action === "getQualities") {
       const { url } = message;
-      const videoId = new URL(url).searchParams.get('v');
-      
-      if (!videoId) {
-        sendResponse({ qualities: null, error: "Video ID not found" });
+      if (!url) {
+        sendResponse({ qualities: null, error: "URL is required" });
         return;
       }
-
-      // Replace http://localhost:4000 with your actual backend endpoint
-      const backendUrl = `http://localhost:4000/api/video-qualities?videoId=${videoId}`;
-
+      const apiUrl = `${BACKEND_URL}/api/video-info`;
       (async () => {
         try {
-          const response = await fetch(backendUrl);
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           const data = await response.json();
-          sendResponse({ qualities: data.qualities || [] });
+          const qualities = (data.formats || []).map((f: any) => ({
+            quality: f.quality,
+            formatId: parseInt(f.itag) || 0,
+            ext: f.ext,
+            hasVideo: true,
+            hasAudio: true
+          }));
+          sendResponse({ qualities });
         } catch (error) {
-          console.error('Fetch qualities error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           sendResponse({ qualities: null, error: errorMessage });
         }
       })();
-      
-      return true;
-    }
-
-    if (message.action === "downloadVideo") {
-      const { url, formatId } = message;
-      const videoId = new URL(url).searchParams.get('v');
-      
-      if (!videoId) {
-        sendResponse({ status: "error", error: "Video ID not found" });
-        return;
-      }
-
-      // Replace http://localhost:4000 with your actual download endpoint
-      const downloadUrl = `http://localhost:4000/api/download?videoId=${videoId}&formatId=${formatId}`;
-
-      (async () => {
-        try {
-          const response = await fetch(downloadUrl);
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          
-          await chrome.downloads.download({ 
-            url: blobUrl, 
-            filename: `${videoId}.mp4` 
-          });
-          
-          sendResponse({ status: "success" });
-        } catch (error) {
-          console.error('Download error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-          sendResponse({ status: "error", error: errorMessage });
-        }
-      })();
-      
       return true;
     }
     
-    if (message.action === "fetchVideoInfo") {
-      const { videoId } = message;
-      // Replace http://localhost:4000 with your actual backend endpoint
-      const backendUrl = `http://localhost:4000/api/video-info?videoId=${videoId}`;
-
-      // Handle async operation properly
-      (async () => {
+    if (message.action === "downloadVideo") {
+      const { url, formatId } = message;
+      if (!url || !formatId) {
+        sendResponse({ status: "error", error: "URL and formatId are required" });
+        return;
+      }
+      const downloadUrl = `${BACKEND_URL}/api/download?url=${encodeURIComponent(url)}&itag=${formatId}`;
+      const videoId = (() => {
         try {
-          const response = await fetch(backendUrl);
-          const data = await response.json();
-          sendResponse({ success: true, videoInfo: data });
-        } catch (error) {
-          console.error('Fetch error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-          sendResponse({ success: false, error: errorMessage });
+          return new URL(url).searchParams.get('v') || 'video';
+        } catch {
+          return 'video';
         }
       })();
-      
-      return true; // Keep the message channel open for sendResponse
+      const filename = `${videoId}_${formatId}.mp4`;
+      chrome.downloads.download(
+        {
+          url: downloadUrl,
+          filename,
+          conflictAction: 'uniquify'
+        },
+        (downloadId) => {
+          if (chrome.runtime.lastError) {
+            console.error('Download failed:', chrome.runtime.lastError.message);
+            sendResponse({ status: "error", error: chrome.runtime.lastError.message });
+          } else {
+            sendResponse({ status: "success", downloadId });
+          }
+        }
+      );
+      return true; 
     }
+    
+    
+    if (message.action === "fetchVideoInfo") {
+      const { videoId } = message;
+      
+      if (!videoId) {
+        sendResponse({ success: false, error: "Video ID is required" });
+        return;
+      }
 
-    if (message.action === "startDownload") {
-      const { videoId, quality } = message;
-      const downloadUrl = `http://localhost:4000/api/download?videoId=${videoId}&quality=${quality}`;
+      // Construct YouTube URL from video ID
+      const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const apiUrl = `${BACKEND_URL}/api/video-info`;
 
-      // Handle async operation properly
       (async () => {
         try {
-          const response = await fetch(downloadUrl);
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
+          console.log('Fetching video info from:', apiUrl);
           
-          await chrome.downloads.download({ 
-            url: url, 
-            filename: `${videoId}.mp4` 
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: youtubeUrl })
           });
           
-          sendResponse({ success: true });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('Video info data:', data);
+          
+          // Transform the response to match DownloadModal expectations
+          const videoInfo = {
+            title: data.title || `Video ${videoId}`,
+            qualities: data.formats?.map((f: any) => f.quality) || []
+          };
+          
+          sendResponse({ success: true, videoInfo: videoInfo });
         } catch (error) {
-          console.error('Download error:', error);
+          console.error('Fetch video info error:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           sendResponse({ success: false, error: errorMessage });
         }
