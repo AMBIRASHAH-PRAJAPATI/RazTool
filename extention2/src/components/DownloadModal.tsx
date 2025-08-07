@@ -14,10 +14,14 @@ interface DownloadModalProps {
 const DownloadModal: React.FC<DownloadModalProps> = ({ onClose }) => {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInfo = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+
         const url = new URL(window.location.href);
         const videoId = url.searchParams.get("v");
         if (!videoId) {
@@ -32,9 +36,12 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ onClose }) => {
         if (response.success && response.videoInfo) {
           setVideoInfo(response.videoInfo);
         } else {
+          setError(response.error || "Failed to fetch video info");
           console.error("Failed to fetch video info:", response.error);
         }
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setError(errorMessage);
         console.error(error);
       } finally {
         setIsLoading(false);
@@ -43,27 +50,62 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ onClose }) => {
     fetchInfo();
   }, []);
 
-  const handleDownload = (quality: string) => {
-    const url = new URL(window.location.href);
-    const videoId = url.searchParams.get("v");
-    if (videoId) {
-      chrome.runtime.sendMessage({
+  const handleDownload = async (quality: string) => {
+    try {
+      const url = new URL(window.location.href);
+      const videoId = url.searchParams.get("v");
+      if (!videoId) {
+        alert("Video ID not found");
+        return;
+      }
+
+      const response = await chrome.runtime.sendMessage({
         action: "startDownload",
         videoId: videoId,
         quality: quality,
       });
-      onClose(); // Close modal after initiating download
+
+      if (response?.success) {
+        console.log("Download started successfully");
+        onClose(); 
+      } else {
+        alert(`Download failed: ${response?.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Download failed';
+      alert(`Download failed: ${errorMessage}`);
+      console.error("Download error:", error);
+    }
+  };
+
+  // Handle backdrop click to close modal
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div 
+      className="fixed inset-0 z-[10000] bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
+      onClick={handleBackdropClick}
+    >
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3 text-center">
           <h3 className="text-lg leading-6 font-medium text-gray-900">Download Options</h3>
           <div className="mt-2 px-7 py-3">
             {isLoading ? (
               <p>Loading video details...</p>
+            ) : error ? (
+              <div>
+                <p className="text-red-600 mb-2">Error: {error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                  Reload Page
+                </button>
+              </div>
             ) : videoInfo ? (
               <div>
                 <p className="text-sm text-gray-500 mb-4">{videoInfo.title}</p>
