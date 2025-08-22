@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Download, Music, Video, Eye, Clock, User } from 'lucide-react';
+import FormatTable from './FormatTable';
 
 
 interface Format {
@@ -92,10 +93,8 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
     }
 
     const { combined = [], videoOnly = [], audioOnly = [] } = video.formats;
-
     const videoFormats = [...combined, ...videoOnly];
     const audioFormats = audioOnly;
-
 
     const formatNumber = (num: number) => {
         return new Intl.NumberFormat().format(num);
@@ -105,9 +104,7 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
         <Card className="w-full shadow-lg">
             <CardContent className="p-0">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                    {/* Left Section - Video Info */}
                     <div className="lg:col-span-1 space-y-4">
-                        {/* Thumbnail */}
                         <div className="relative">
                             <img
                                 src={video.thumbnail}
@@ -118,8 +115,6 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
                                 {video.duration}s
                             </div>
                         </div>
-
-                        {/* Video Details */}
                         <div className="space-y-3">
                             <h3 className="font-bold text-lg line-clamp-2 text-gray-900">
                                 {video.title}
@@ -144,8 +139,6 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
                             </div>
                         </div>
                     </div>
-
-                    {/* Right Section - Download Options */}
                     <div className="lg:col-span-2">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -158,109 +151,14 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
                                     <span>Audio</span>
                                 </TabsTrigger>
                             </TabsList>
-
-                            {/* Video Formats */}
                             <TabsContent value="video" className="space-y-4">
                                 <h4 className="font-semibold text-lg mb-4">Video Formats</h4>
-                                <div className="border rounded-lg overflow-hidden">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-gray-50">
-                                                <TableHead className="font-semibold">Quality</TableHead>
-                                                <TableHead className="font-semibold">Format</TableHead>
-                                                <TableHead className="font-semibold">Size</TableHead>
-                                                <TableHead className="text-right font-semibold">Action</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {videoFormats.map((format) => (
-                                                <TableRow key={format.itag} className="hover:bg-gray-50">
-                                                    <TableCell>
-                                                        <Badge variant="secondary" className="font-medium">
-                                                            {format.quality}
-                                                        </Badge>
-                                                        {format.type === 'video-only' &&
-                                                            <span className="ml-2 text-xs text-orange-700">(no audio)</span>
-                                                        }
-                                                        {format.type === 'combined' &&
-                                                            <span className="ml-2 text-xs text-green-700">(audio+video)</span>
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="text-sm text-gray-600">
-                                                            {format.ext.toUpperCase()}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="text-sm text-gray-600">
-                                                            {humanFileSize(format.filesize)}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => onDownload(format)}
-                                                            className="bg-red-500 hover:bg-red-600 text-white"
-                                                            title={format.type !== 'combined' ? 'Audio not included. Merge video+audio with advanced tools.' : 'Download'}
-                                                        >
-                                                            <Download size={14} className="mr-1" />
-                                                            Download
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-
-                                    </Table>
-                                </div>
+                                <FormatTable formats={videoFormats} kind="video" onDownload={onDownload} />
                             </TabsContent>
 
-                            {/* Audio Formats */}
                             <TabsContent value="audio" className="space-y-4">
                                 <h4 className="font-semibold text-lg mb-4">Audio Formats</h4>
-                                <div className="border rounded-lg overflow-hidden">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-gray-50">
-                                                <TableHead className="font-semibold">Quality</TableHead>
-                                                <TableHead className="font-semibold">Format</TableHead>
-                                                <TableHead className="font-semibold">Size</TableHead>
-                                                <TableHead className="text-right font-semibold">Action</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {audioFormats.map((format) => (
-                                                <TableRow key={format.itag} className="hover:bg-gray-50">
-                                                    <TableCell>
-                                                        <Badge variant="secondary" className="font-medium">
-                                                            {format.quality}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="text-sm text-gray-600">
-                                                            {format.ext.toUpperCase()}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="text-sm text-gray-600">
-                                                            {humanFileSize(format.filesize)}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => onDownload(format)}
-                                                            className="bg-red-500 hover:bg-red-600 text-white"
-                                                        >
-                                                            <Download size={14} className="mr-1" />
-                                                            Download
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                <FormatTable formats={audioFormats} kind="audio" onDownload={onDownload} />
                             </TabsContent>
                         </Tabs>
                     </div>
