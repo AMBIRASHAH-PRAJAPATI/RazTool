@@ -13,10 +13,12 @@
   "type": "commonjs",
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
+    "@nuclearplayer/ytdl-core": "^4.16.13",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "youtube-dl-exec": "^3.0.22"
+    "i": "^0.3.7",
+    "npm": "^11.5.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

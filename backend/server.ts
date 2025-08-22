@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import youtubedl, { exec } from 'youtube-dl-exec';
+import ytdl from '@nuclearplayer/ytdl-core';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -22,27 +22,32 @@ app.use(express.json());
 
 // --- TypeScript interfaces for proper type inference ---
 interface VideoFormat {
-  format_id: string;
+  itag: number;
   format_note?: string;
-  resolution?: string;
-  ext: string;
-  filesize?: number;
-  filesize_approx?: number;
+  qualityLabel?: string;
+  quality?: string;
+  container: string;
+  hasVideo: boolean;
+  hasAudio: boolean;
   url: string;
-  vcodec: string;
-  acodec: string;
+  contentLength?: string;
+  approxDurationMs?: string;
+}
+
+interface VideoDetails {
+  videoId: string;
+  title: string;
+  author: {
+    name: string;
+  };
+  lengthSeconds: string;
+  viewCount: string;
+  thumbnails: { url: string }[];
 }
 
 interface VideoInfo {
-  id: string;
-  title: string;
-  channel?: string;
-  uploader?: string;
-  duration?: number;
-  view_count?: number;
-  thumbnail?: string;
-  thumbnails?: { url: string }[];
-  formats?: VideoFormat[];
+  videoDetails: VideoDetails;
+  formats: VideoFormat[];
 }
 
 // --- /api/video-info endpoint ---
@@ -52,41 +57,35 @@ app.post('/api/video-info', async (req, res) => {
     return res.status(400).json({ error: 'Invalid YouTube URL' });
 
   try {
-    const info = await youtubedl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      youtubeSkipDashManifest: true,
-    }) as VideoInfo | string; // Be explicit about possible types
+    // Use ytdl.getInfo to get video information
+    const info = await ytdl.getInfo(url) as VideoInfo;
 
-    if (typeof info === 'string' || !info.formats) {
-      // If info is a string or missing formats, it's invalid
+    if (!info || !info.formats) {
       return res.status(500).json({ error: 'Invalid video info received.' });
     }
 
-    // Now info is VideoInfo
+    // Filter formats for video+audio mp4 only
     const formats = info.formats
-      .filter(f => f.vcodec !== 'none' && f.acodec !== 'none' && f.ext === 'mp4' && f.format_note)
+      .filter(f => f.hasVideo && f.hasAudio && f.container === 'mp4')
       .map(f => ({
-        itag: f.format_id, // Always use format_id as string (yt-dlp)
-        quality: f.format_note || f.resolution || f.ext || 'unknown',
-        filesize: f.filesize || f.filesize_approx,
-        mimeType: f.ext ? `video/${f.ext}` : undefined,
-        ext: f.ext,
+        itag: f.itag.toString(),
+        quality: f.qualityLabel || f.quality || 'unknown',
+        filesize: f.contentLength ? parseInt(f.contentLength) : undefined,
+        mimeType: `video/${f.container}`,
+        ext: f.container,
         url: f.url,
       }));
 
     return res.json({
-      videoId: info.id,
-      title: info.title,
-      channel: info.channel || info.uploader || '',
-      duration: info.duration,
-      viewCount: info.view_count,
+      videoId: info.videoDetails.videoId,
+      title: info.videoDetails.title,
+      channel: info.videoDetails.author.name,
+      duration: parseInt(info.videoDetails.lengthSeconds),
+      viewCount: parseInt(info.videoDetails.viewCount),
       formats,
-      thumbnail: info.thumbnails && info.thumbnails.length
-        ? info.thumbnails[info.thumbnails.length - 1].url
-        : info.thumbnail || ''
+      thumbnail: info.videoDetails.thumbnails && info.videoDetails.thumbnails.length
+        ? info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url
+        : ''
     });
   } catch (err) {
     console.error('Error [video-info]:', err);
@@ -100,34 +99,46 @@ app.get('/api/download', async (req, res) => {
   const itag = req.query.itag as string;
   if (!url || !itag)
     return res.status(400).send('Missing parameters');
+
   try {
-    const info = await youtubedl(url, { dumpSingleJson: true }) as VideoInfo | string;
-    if (typeof info === 'string' || !info.formats)
-      return res.status(500).send('Invalid video info');
-
-    const format = info.formats.find(f => f.format_id === itag);
-    const filename = `${info.id || 'video'}_${itag}.${format?.ext || 'mp4'}`;
+    // Get basic info for filename
+    const info = await ytdl.getBasicInfo(url);
+    const filename = `${info.videoDetails.videoId}_${itag}.mp4`;
+    
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', format?.ext ? `video/${format.ext}` : 'video/mp4');
+    res.setHeader('Content-Type', 'video/mp4');
 
-    // Carefully check proc.stdout is not null:
-    const proc = exec(url, { format: itag, output: '-', quiet: true });
-    if (proc.stdout) {
-      proc.stdout.pipe(res);
-    } else {
-      return res.status(500).send('Failed to start download process');
-    }
+    // Create download stream with specific itag
+    const downloadStream = ytdl(url, {
+      quality: itag,
+      filter: 'audioandvideo'
+    });
 
-    proc.stderr?.on('data', chunk => console.error('yt-dlp error:', chunk.toString()));
-    proc.on('error', err => {
-      console.error('Download process error:', err);
-      if (!res.writableEnded) res.status(500).end('Download failed.');
+    // Handle progress (optional)
+    downloadStream.on('progress', (chunkLength, downloaded, total) => {
+      const percent = downloaded / total;
+      console.log(`Download progress: ${(percent * 100).toFixed(2)}%`);
     });
-    proc.on('close', code => {
-      if (!res.writableEnded) res.end();
-      if (code !== 0) console.error(`yt-dlp exited with code ${code}`);
+
+    // Handle errors
+    downloadStream.on('error', (err) => {
+      console.error('Download stream error:', err);
+      if (!res.writableEnded) {
+        res.status(500).end('Download failed.');
+      }
     });
+
+    downloadStream.on('end', () => {
+      if (!res.writableEnded) {
+        res.end();
+      }
+    });
+
+    // Pipe the stream to response
+    downloadStream.pipe(res);
+
   } catch (err) {
+    console.error('Download error:', err);
     return res.status(500).send('Server error');
   }
 });

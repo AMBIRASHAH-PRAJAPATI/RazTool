@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { DownloadIcon } from 'lucide-react';
-
 type VideoQuality = {
   quality: string;
   formatId: number;
