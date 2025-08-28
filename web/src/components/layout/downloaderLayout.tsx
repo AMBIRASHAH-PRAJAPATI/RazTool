@@ -7,6 +7,7 @@ import { Search, X } from 'lucide-react';
 interface DownloaderLayout {
   title?: string;
   subtitle?: string;
+  loading: boolean;
   onSearch?: (url: string) => void;
   children?: React.ReactNode;
 }
@@ -14,6 +15,7 @@ interface DownloaderLayout {
 const DownloaderLayout: React.FC<DownloaderLayout> = ({ 
   title = "Video Downloader",
   subtitle = "Download videos to MP3 and MP4 online for free",
+  loading,
   onSearch,
   children 
 }) => {
@@ -36,9 +38,9 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
+        <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
             {title}
           </h1>
@@ -63,6 +65,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
                     variant="ghost"
                     size="sm"
                     onClick={handleClear}
+                    disabled={loading}
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
                   >
                     <X size={16} />
@@ -71,7 +74,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
               </div>
               <Button 
                 onClick={handleSearch}
-                disabled={!searchValue.trim()}
+                disabled={!searchValue.trim() || loading}
                 className="h-12 px-6 bg-red-500 hover:bg-red-600 text-white font-medium min-w-[120px]"
               >
                 <Search size={18} className="mr-2" />

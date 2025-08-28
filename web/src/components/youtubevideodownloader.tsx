@@ -62,6 +62,7 @@ function YouTubeVideoDownloader() {
         title="🎓 YouTube Video Downloader"
         subtitle="Download YouTube videos to MP3 and MP4 online for free"
         onSearch={handleAnalyze}
+        loading={loading}
       >
       <YouTubeVideoResults
         video={video}

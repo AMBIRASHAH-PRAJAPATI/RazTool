@@ -6,8 +6,8 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "#home", label: "Home" },
-    { href: "#instagram", label: "Instagram" },
+    { href: "/", label: "YouTube" },
+    { href: "/instagram", label: "Instagram" },
     { href: "#about", label: "About" }
   ];
 
@@ -25,15 +25,12 @@ const Navbar = () => {
     <nav className="bg-white shadow-md p-4 sticky top-0 z-50">
       <div className="container mx-auto">
         <div className="flex items-center justify-between">
-          {/* Logo Section */}
           <div className="flex items-center text-gray-800 text-2xl font-bold tracking-tight cursor-pointer hover:opacity-80 transition-opacity">
             <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-red-500 text-white text-xl font-bold mr-1 shadow-sm">
               R
             </span>
             <span className="text-gray-800">azTube</span>
           </div>
-
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4 md:space-x-6">
             {navItems.map((item, index) => (
               <Button 
@@ -45,8 +42,6 @@ const Navbar = () => {
               </Button>
             ))}
           </div>
-
-          {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             className="md:hidden p-2"
@@ -55,8 +50,6 @@ const Navbar = () => {
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </Button>
         </div>
-
-        {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-2">
