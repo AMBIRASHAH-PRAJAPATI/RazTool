@@ -58,19 +58,19 @@ function YouTubeVideoDownloader() {
     window.open(downloadUrl, '_blank');
   };
   return (
-      <DownloaderLayout
-        title="🎓 YouTube Video Downloader"
-        subtitle="Download YouTube videos to MP3 and MP4 online for free"
-        onSearch={handleAnalyze}
-        loading={loading}
-      >
+    <DownloaderLayout
+      title="🎓 YouTube Video Downloader"
+      subtitle="Download YouTube videos to MP3 and MP4 online for free"
+      onSearch={handleAnalyze}
+      loading={loading}
+    >
       <YouTubeVideoResults
         video={video}
         loading={loading}
         error={error}
         onDownload={handleDownload}
       />
-      </DownloaderLayout>
+    </DownloaderLayout>
   );
 }
 

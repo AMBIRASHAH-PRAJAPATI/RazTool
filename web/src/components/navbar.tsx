@@ -1,28 +1,68 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { NavLink } from "react-router-dom";
 import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: "YouTube" },
-    { href: "/instagram", label: "Instagram" },
-    { href: "#about", label: "About" }
+    { href: "/", label: "YouTube", type: "route" },
+    { href: "/instagram", label: "Instagram", type: "route" },
+    { href: "#about", label: "About", type: "hash" }
   ];
 
-  const handleNavClick = (href: string) => {
+  const linkClasses =
+    "px-3 py-2 text-gray-700 text-base font-medium transition-all duration-200 border-b-2 border-transparent hover:border-blue-600 hover:text-blue-600";
+
+  const handleHashClick = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    href: string
+  ) => {
+    e.preventDefault();
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+      window.history.pushState(null, '', href);
     }
-    setIsMobileMenuOpen(false);
   };
 
-  const buttonClasses = "px-3 py-2 text-gray-700 hover:text-red-500 text-lg";
+  const renderNavItems = (isMobile = false) => {
+    return navItems.map((item, index) => {
+      const additionalClasses = isMobile ? " block" : "";
+      const handleClick = isMobile ? () => setIsMobileMenuOpen(false) : undefined;
+
+      if (item.type === "hash") {
+        return (
+          <a
+            key={index}
+            href={item.href}
+            className={`${linkClasses}${additionalClasses}`}
+            onClick={(e) => {
+              handleHashClick(e, item.href);
+              if (isMobile) setIsMobileMenuOpen(false);
+            }}
+          >
+            {item.label}
+          </a>
+        );
+      }
+      return (
+        <NavLink
+          key={index}
+          to={item.href}
+          className={({ isActive }: { isActive: boolean }) =>
+            `${linkClasses}${additionalClasses} ${isActive ? "border-blue-600 text-blue-600" : ""}`
+          }
+          onClick={handleClick}
+        >
+          {item.label}
+        </NavLink>
+      );
+    });
+  };
 
   return (
-    <nav className="bg-white shadow-md p-4 sticky top-0 z-50">
+    <nav className="bg-white shadow-sm px-6 py-4 sticky top-0 z-50 rounded-full mx-4 mt-3">
       <div className="container mx-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center text-gray-800 text-2xl font-bold tracking-tight cursor-pointer hover:opacity-80 transition-opacity">
@@ -31,38 +71,21 @@ const Navbar = () => {
             </span>
             <span className="text-gray-800">azTube</span>
           </div>
-          <div className="hidden md:flex items-center space-x-4 md:space-x-6">
-            {navItems.map((item, index) => (
-              <Button 
-                key={index}
-                variant="ghost" 
-                className={buttonClasses}
-              >
-                <a href={item.href} className="px-3 py-2">{item.label}</a>
-              </Button>
-            ))}
+          <div className="hidden md:flex items-center space-x-6">
+            {renderNavItems()}
           </div>
-          <Button
-            variant="ghost"
+
+          <button
             className="md:hidden p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
+          </button>
         </div>
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-2">
-              {navItems.map((item, index) => (
-                <Button 
-                  key={index}
-                  variant="ghost" 
-                  className={`${buttonClasses} justify-start`}
-                  onClick={() => handleNavClick(item.href)}
-                >
-                  {item.label}
-                </Button>
-              ))}
+            <div className="flex flex-col space-y-3">
+              {renderNavItems()}
             </div>
           </div>
         )}

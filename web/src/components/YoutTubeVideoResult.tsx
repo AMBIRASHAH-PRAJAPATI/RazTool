@@ -47,7 +47,6 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState('video');
 
-    // Loading State
     if (loading) {
         return (
             <Card className="w-full">
@@ -65,8 +64,6 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
             </Card>
         );
     }
-
-    // Error State
     if (error) {
         return (
             <Card className="w-full border-red-200 bg-red-50">
@@ -79,15 +76,12 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
             </Card>
         );
     }
-
     if (!video) {
         return null;
     }
-
     const { combined = [], videoOnly = [], audioOnly = [] } = video.formats;
     const videoFormats = [...combined, ...videoOnly];
     const audioFormats = audioOnly;
-
     const formatNumber = (num: number) => {
         return new Intl.NumberFormat().format(num);
     };

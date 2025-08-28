@@ -12,12 +12,12 @@ interface DownloaderLayout {
   children?: React.ReactNode;
 }
 
-const DownloaderLayout: React.FC<DownloaderLayout> = ({ 
+const DownloaderLayout: React.FC<DownloaderLayout> = ({
   title = "Video Downloader",
   subtitle = "Download videos to MP3 and MP4 online for free",
   loading,
   onSearch,
-  children 
+  children
 }) => {
   const [searchValue, setSearchValue] = useState<string>('');
 
@@ -31,7 +31,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
     setSearchValue('');
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       handleSearch();
     }
@@ -40,7 +40,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
   return (
     <div className="bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
             {title}
           </h1>
@@ -57,7 +57,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
                   placeholder="Paste your link here..."
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   className="pr-10 h-12 text-base border-gray-300 focus:border-red-500 focus:ring-red-500"
                 />
                 {searchValue && (
@@ -72,7 +72,7 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
                   </Button>
                 )}
               </div>
-              <Button 
+              <Button
                 onClick={handleSearch}
                 disabled={!searchValue.trim() || loading}
                 className="h-12 px-6 bg-red-500 hover:bg-red-600 text-white font-medium min-w-[120px]"
@@ -81,8 +81,6 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
                 Analyze
               </Button>
             </div>
-            
-            {/* Message Section */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-500 text-center">
                 <span className="font-medium">Note:</span> This tool is for educational purposes only.
@@ -90,8 +88,6 @@ const DownloaderLayout: React.FC<DownloaderLayout> = ({
             </div>
           </CardContent>
         </Card>
-
-        {/* Children Content */}
         {children}
       </div>
     </div>
