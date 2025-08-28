@@ -2,7 +2,7 @@
 const API_URL = 'http://localhost:4000/api';
 
 export async function fetchVideoInfo(url: string) {
-  const res = await fetch(`${API_URL}/video-info`, {
+  const res = await fetch(`${API_URL}/youtube/video-info`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
@@ -13,5 +13,5 @@ export async function fetchVideoInfo(url: string) {
 
 export function getDownloadUrl({ url, itag }: { url: string, itag: number }) {
   // Backend streams the requested format
-  return `${API_URL.replace('/api', '')}/api/download?url=${encodeURIComponent(url)}&itag=${itag}`;
+  return `${API_URL.replace('/api', '')}/api/youtube/download?url=${encodeURIComponent(url)}&itag=${itag}`;
 }
