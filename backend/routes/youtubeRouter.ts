@@ -1,12 +1,12 @@
 import express from "express";
-import youtubeController from "../controllers/youtubeController";
+import { YoutubeController } from "../controllers/youtubeController";
 
 const router = express.Router();
 
 // Parse JSON request bodies
 router.use(express.json());
 
-router.post("/video-info", youtubeController.getVideoInfo);
-router.get("/download", youtubeController.downloadVideo);
+router.post("/video-info", YoutubeController.getVideoInfo);
+router.get("/download", YoutubeController.downloadVideo);
 
 export default router;

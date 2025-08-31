@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DownloaderLayout from './layout/downloaderLayout';
-import { fetchVideoInfo, getDownloadUrl } from '@/api';
+import { fetchYoutubeVideoInfo, getYoutubeDownloadUrl } from '@/api';
 import YouTubeVideoResults from './YoutTubeVideoResult';
 
 
@@ -36,17 +36,17 @@ function YouTubeVideoDownloader() {
   const [video, setVideo] = useState<VideoInfo | null>(null);
   const [error, setError] = useState('');
 
-  const handleAnalyze = async (url: string) => {
+  const getContent = async (url: string) => {
     setUrl(url);
     setError('');
     setVideo(null);
-    if (!url.match(YT_REGEX)) {
-      setError('Enter a valid YouTube URL');
-      return;
-    }
+    // if (!url.match(YT_REGEX)) {
+    //   setError('Enter a valid YouTube URL');
+    //   return;
+    // }
     setLoading(true);
     try {
-      const info: VideoInfo = await fetchVideoInfo(url.trim());
+      const info: VideoInfo = await fetchYoutubeVideoInfo(url.trim());
       setVideo(info);
     } catch (err) {
       setError('Could not analyze video: ' + (err as Error).message);
@@ -54,14 +54,14 @@ function YouTubeVideoDownloader() {
     setLoading(false);
   };
   const handleDownload = (format: Format) => {
-    const downloadUrl = getDownloadUrl({ url, itag: format.itag });
+    const downloadUrl = getYoutubeDownloadUrl({ url, itag: format.itag });
     window.open(downloadUrl, '_blank');
   };
   return (
     <DownloaderLayout
       title="🎓 YouTube Video Downloader"
       subtitle="Download YouTube videos to MP3 and MP4 online for free"
-      onSearch={handleAnalyze}
+      onSearch={getContent}
       loading={loading}
     >
       <YouTubeVideoResults

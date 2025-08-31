@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import ytdl from '@nuclearplayer/ytdl-core';
 import dotenv from 'dotenv';
 import youtubeRouter from "./routes/youtubeRouter"
 import instagramRouter from "./routes/instagramRouter"

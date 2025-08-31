@@ -4,6 +4,7 @@ import Navbar from './components/navbar';
 import YouTubeVideoDownloader from './components/youtubevideodownloader';
 import FeaturesSection from './components/FeaturesSection';
 import FAQSection from './components/FAQSection';
+import InstagramVideoDownloader from './components/InstaVideoDownload';
 
 
 function App() {
@@ -18,7 +19,8 @@ function App() {
   return (
     <div className="w-full md:w-[80%] mx-auto">
       <Navbar />
-      <YouTubeVideoDownloader />
+      {/* <YouTubeVideoDownloader /> */}
+      <InstagramVideoDownloader />
       <FeaturesSection >
         <div className="text-center mb-12 max-w-4xl mx-auto">
           <p className="text-lg text-gray-700 leading-relaxed mb-6">
