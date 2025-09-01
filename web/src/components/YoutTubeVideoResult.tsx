@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, Video, Eye, Clock, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Music, Video, Eye, Clock, User, Download } from 'lucide-react';
 import FormatTable from './FormatTable';
-
 
 interface Format {
     itag: number;
@@ -46,21 +46,22 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
 
     if (loading) {
         return (
-            <Card className="w-full">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                    <div className="w-full max-w-md mb-4">
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-500 rounded-full animate-pulse loading-bar"></div>
+            <Card className="w-full border-0 shadow-card animate-scale-in">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                    <div className="w-full max-w-md mb-6">
+                        <div className="h-3 bg-muted rounded-full overflow-hidden relative">
+                            <div className="h-full bg-gradient-primary rounded-full animate-loading-bar absolute inset-0"></div>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2 text-gray-600">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
-                        <span>Analyzing video...</span>
+                    <div className="flex items-center space-x-3 text-muted-foreground">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        <span className="text-lg font-medium">Analyzing video...</span>
                     </div>
                 </CardContent>
             </Card>
         );
     }
+
     if (error) {
         return (
             <Card className="w-full border-red-200 bg-red-50">
@@ -73,42 +74,60 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
             </Card>
         );
     }
+
     if (!video) {
         return null;
     }
+
     const { combined = [], videoOnly = [], audioOnly = [] } = video.formats;
     const videoFormats = [...combined, ...videoOnly];
     const audioFormats = audioOnly;
+
     const formatNumber = (num: number) => {
         return new Intl.NumberFormat().format(num);
     };
 
+    const formatDuration = (seconds: string) => {
+        const secs = parseInt(seconds);
+        const hours = Math.floor(secs / 3600);
+        const minutes = Math.floor((secs % 3600) / 60);
+        const remainingSeconds = secs % 60;
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
     return (
-        <Card className="w-full shadow-lg">
+        <Card className="w-full shadow-lg animate-fade-in">
             <CardContent className="p-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                    <div className="lg:col-span-1 space-y-4">
-                        <div className="relative">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                    <div className="lg:col-span-2 p-8 border-r border-border/50 space-y-4">
+                        <div className="relative group overflow-hidden rounded-xl">
                             <img
                                 src={video.thumbnail}
                                 alt={video.title}
-                                className="w-full aspect-video object-cover rounded-lg shadow-md"
+                                className="w-full aspect-video object-cover transition-transform duration-300 group-hover:scale-105"
                             />
-                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
-                                {video.duration}s
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <Badge
+                                variant='destructive'
+                                className="absolute bottom-3 right-3 px-2 py-1 text-sm font-bold"
+                            >
+                                <Clock className="w-3 h-3 mr-1" />
+                                {formatDuration(video.duration)}
+                            </Badge>
                         </div>
-                        <div className="space-y-3">
-                            <h3 className="font-bold text-lg line-clamp-2 text-gray-900">
+                        <div className="space-y-4">
+                            <h2 className="font-bold text-2xl leading-tight text-foreground line-clamp-3">
                                 {video.title}
-                            </h3>
-
-                            <div className="space-y-2 text-sm text-gray-600">
+                            </h2>
+                            <div className="space-y-3 text-sm text-gray-600">
                                 <div className="flex items-center space-x-2">
                                     <User size={16} />
                                     <span className="font-medium">{video.channel}</span>
                                 </div>
-
                                 <div className="flex items-center space-x-4">
                                     <div className="flex items-center space-x-1">
                                         <Clock size={16} />
@@ -122,25 +141,47 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
                             </div>
                         </div>
                     </div>
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-3 p-8">
+                        <div className="mb-6">
+                            <h3 className="text-2xl font-bold text-foreground mb-2">Download Options</h3>
+                            <p className="text-muted-foreground">Choose your preferred format and quality</p>
+                        </div>
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-6">
-                                <TabsTrigger value="video" className="flex items-center space-x-2">
-                                    <Video size={16} />
-                                    <span>Video</span>
+                            <TabsList className="grid w-full grid-cols-2 mb-8 bg-background/80 backdrop-blur-sm">
+                                <TabsTrigger
+                                    value="video"
+                                    className="flex items-center space-x-2 border border-border rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
+                                >
+                                    <Video className="w-5 h-5" />
+                                    <span className="font-medium">Video ({videoFormats.length})</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="audio" className="flex items-center space-x-2">
-                                    <Music size={16} />
-                                    <span>Audio</span>
+
+                                <TabsTrigger
+                                    value="audio"
+                                    className="flex items-center space-x-2 border border-border rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
+                                >
+                                    <Music className="w-5 h-5" />
+                                    <span className="font-medium">Audio ({audioFormats.length})</span>
                                 </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="video" className="space-y-4">
-                                <h4 className="font-semibold text-lg mb-4">Video Formats</h4>
+                            <TabsContent value="video" className="space-y-6 animate-fade-in">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xl font-semibold text-foreground">Video Formats</h4>
+                                    <Badge variant="secondary" className="bg-background/50">
+                                        <Download className="w-3 h-3 mr-1" />
+                                        {videoFormats.length} options
+                                    </Badge>
+                                </div>
                                 <FormatTable formats={videoFormats} kind="video" onDownload={onDownload} />
                             </TabsContent>
-
-                            <TabsContent value="audio" className="space-y-4">
-                                <h4 className="font-semibold text-lg mb-4">Audio Formats</h4>
+                            <TabsContent value="audio" className="space-y-6 animate-fade-in">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xl font-semibold text-foreground">Audio Formats</h4>
+                                    <Badge variant="secondary" className="bg-background/50">
+                                        <Download className="w-3 h-3 mr-1" />
+                                        {audioFormats.length} options
+                                    </Badge>
+                                </div>
                                 <FormatTable formats={audioFormats} kind="audio" onDownload={onDownload} />
                             </TabsContent>
                         </Tabs>

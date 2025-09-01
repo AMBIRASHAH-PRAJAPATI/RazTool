@@ -19,8 +19,8 @@ function App() {
   return (
     <div className="w-full md:w-[80%] mx-auto">
       <Navbar />
-      {/* <YouTubeVideoDownloader /> */}
-      <InstagramVideoDownloader />
+      <YouTubeVideoDownloader />
+      {/* <InstagramVideoDownloader /> */}
       <FeaturesSection >
         <div className="text-center mb-12 max-w-4xl mx-auto">
           <p className="text-lg text-gray-700 leading-relaxed mb-6">
