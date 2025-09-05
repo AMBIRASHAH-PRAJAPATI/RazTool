@@ -20,6 +20,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'index.html'),
+        content: resolve(__dirname, 'src/content.tsx'), 
       },
     },
   },

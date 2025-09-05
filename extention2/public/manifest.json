@@ -25,5 +25,11 @@
   ],
   "action": {
     "default_popup": "index.html"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/*"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ]
 }

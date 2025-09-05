@@ -99,10 +99,7 @@ function App() {
   return (
     <div className="p-4 bg-gray-900 text-white min-w-[320px] font-sans flex flex-col h-[500px]">
       <h1 className="text-xl font-bold mb-4 text-center">YouTube Downloader</h1>
-  
-      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto pr-1">
-        {/* Video Info Preview */}
         {videoInfo && (
           <div className="mb-4 flex items-center space-x-3 bg-gray-800 rounded-lg p-3">
             <img src={videoInfo.thumbnail} alt="thumbnail" className="w-20 h-12 rounded" />
@@ -113,13 +110,9 @@ function App() {
             </div>
           </div>
         )}
-  
-        {/* Status */}
         <div className="mb-4 p-3 bg-gray-800 rounded-lg">
           <p className="text-sm text-center">{status}</p>
         </div>
-  
-        {/* Qualities */}
         {!isLoading && videoInfo && videoInfo.qualities && videoInfo.qualities.length > 0 && (
           <div className="space-y-2 mb-4">
             <h3 className="text-sm font-semibold text-gray-300 mb-2">Available Qualities:</h3>
@@ -150,8 +143,6 @@ function App() {
           </div>
         )}
       </div>
-  
-      {/* Fixed Download Button */}
       <div className="mt-4">
         <button
           className={`w-full py-3 px-4 rounded font-bold transition-colors flex items-center justify-center space-x-2 ${
