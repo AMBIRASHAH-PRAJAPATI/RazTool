@@ -1,99 +1,115 @@
 import React, { useState } from 'react';
 import DownloaderLayout from './layout/downloaderLayout';
-import { fetchInstagramContentInfo, getInstagramDownloadUrl } from '@/api';
 import InstaVideoResult from './InstaVideoResult';
+import { fetchInstagramContentInfo, downloadInstagramMedia, isValidInstagramUrl } from '../api';
 
-// Media format type for Instagram videos/images
-interface InstaMedia {
+interface InstagramContent {
+  id: string;
+  shortcode: string;
+  type: 'post' | 'reel' | 'story' | 'highlight';
+  is_video: boolean;
+  video_url?: string;
+  display_url: string;
+  thumbnail_url: string;
+  caption?: string;
+  owner: {
     id: string;
-    type: string;      // 'video' or 'image'
-    url: string;
-    thumbnail?: string;
-    downloadUrl: string;
-    caption?: string;
+    username: string;
+    full_name: string;
+    profile_pic_url: string;
+    is_verified: boolean;
+  };
+  dimensions: { height: number; width: number };
+  video_duration?: number;
+  has_audio?: boolean;
+  view_count?: number;
+  like_count?: number;
+  comment_count?: number;
+  taken_at_timestamp: number;
+  product_type?: string;
 }
-
-// Instagram post info type
-interface InstaPostInfo {
-    id: string;
-    shortcode: string;
-    url: string;
-    caption: string;
-    owner: {
-        username: string;
-        fullName: string;
-        profilePic?: string;
-        isVerified?: boolean;
-    };
-    stats: {
-        likes: number;
-        comments: number;
-        views?: number;
-    };
-    media: InstaMedia[];
-    timestamp: number;
-}
-
-// Regex to validate Instagram post, reel, or IGTV URLs
-const INSTA_REGEX = /(instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_\-]+)/;
 
 function InstagramVideoDownloader() {
-    const [url, setUrl] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [post, setPost] = useState<InstaPostInfo | null>(null);
-    const [error, setError] = useState('');
+  const [post, setPost] = useState<InstagramContent | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
-    const getContent = async (instagramUrl: string) => {
-        setUrl(instagramUrl);
+  const getContent = async (url: string) => {
+    if (!url.trim()) {
+      setError('Please enter an Instagram URL');
+      return;
+    }
+
+    if (!isValidInstagramUrl(url)) {
+      setError('Please enter a valid Instagram URL (post, reel, story, or highlight)');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setPost(null);
+
+    try {
+      const result = await fetchInstagramContentInfo(url);
+      
+      if (result.success && result.data) {
+        setPost(result.data);
         setError('');
+      } else {
+        setError(result.message || 'Failed to fetch Instagram content. Make sure the URL is correct and the content is public.');
         setPost(null);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      setPost(null);
+      console.error('Error fetching content:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Optional: enable regex URL validation
-        // if (!INSTA_REGEX.test(instagramUrl.trim())) {
-        //   setError('Enter a valid Instagram post, reel, or IGTV URL');
-        //   return;
-        // }
+  const handleDownload = async (type: 'video' | 'image') => {
+    if (!post) return;
 
-        setLoading(true);
-        try {
-            const info = await fetchInstagramContentInfo(instagramUrl.trim());
-            if (info.success && info.data) {
-                setPost(info.data);
-            } else {
-                setError(info.error || 'Could not analyze Instagram link');
-            }
-        } catch (err) {
-            setError('Could not analyze link: ' + (err as Error).message);
-        }
-        setLoading(false);
-    };
+    try {
+      let mediaUrl: string;
+      let filename: string;
+      
+      if (type === 'video' && post.is_video && post.video_url) {
+        mediaUrl = post.video_url;
+        filename = `${post.owner.username}_${post.type}_${post.shortcode}.mp4`;
+      } else {
+        mediaUrl = post.display_url;
+        filename = `${post.owner.username}_${post.type}_${post.shortcode}.jpg`;
+        type = 'image';
+      }
 
-    const handleDownload = (media: InstaMedia, index: number) => {
-        const filename =
-            `instagram_${media.type}_${index + 1}_${post?.shortcode}.${media.type === 'video' ? 'mp4' : 'jpg'}`;
-        const downloadUrl = getInstagramDownloadUrl({
-            mediaUrl: media.downloadUrl,
-            type: media.type,
-            filename
-        });
-        window.open(downloadUrl, '_blank');
-    };
+      await downloadInstagramMedia({
+        media_url: mediaUrl,
+        filename,
+        type,
+      });
+    } catch (err) {
+      setError('Download failed. Please try again.');
+      console.error('Download error:', err);
+    }
+  };
 
-    return (
-        <DownloaderLayout
-            title="📱 Instagram Video Downloader"
-            subtitle="Download Instagram videos and reels online for free"
-            onSearch={getContent}
-            loading={loading}
-        >
-            <InstaVideoResult
-                post={post}
-                loading={loading}
-                error={error}
-                onDownload={handleDownload}
-            />
-        </DownloaderLayout>
-    );
+  return (
+    <DownloaderLayout
+      title="📱 Instagram Video Downloader"
+      subtitle="Download Instagram videos and reels online for free"
+      onSearch={getContent}
+      loading={loading}
+    >
+      <InstaVideoResult
+        post={post}
+        loading={loading}
+        error={error}
+        onDownload={handleDownload}
+      />
+    </DownloaderLayout>
+  );
 }
 
 export default InstagramVideoDownloader;

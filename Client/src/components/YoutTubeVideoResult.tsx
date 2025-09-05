@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Music, Video, Eye, Clock, User, Download } from 'lucide-react';
 import FormatTable from './FormatTable';
+import { formatDuration } from '../utils'
 
 interface Format {
     itag: number;
@@ -85,18 +86,6 @@ const YouTubeVideoResults: React.FC<YouTubeVideoResultsProps> = ({
 
     const formatNumber = (num: number) => {
         return new Intl.NumberFormat().format(num);
-    };
-
-    const formatDuration = (seconds: string) => {
-        const secs = parseInt(seconds);
-        const hours = Math.floor(secs / 3600);
-        const minutes = Math.floor((secs % 3600) / 60);
-        const remainingSeconds = secs % 60;
-
-        if (hours > 0) {
-            return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-        }
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
     return (

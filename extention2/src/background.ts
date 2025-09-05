@@ -1,14 +1,9 @@
-// Define interfaces for messages to ensure type-safe communication
-interface FetchVideoInfoMessage {
-  action: "fetchVideoInfo";
-  videoId: string;
-}
 interface GetVideoUrlMessage {
   action: "getVideoUrl";
 }
 
-interface GetQualitiesMessage {
-  action: "getQualities";
+interface FetchVideoInfoMessage {
+  action: "fetchVideoInfo";
   url: string;
 }
 
@@ -18,70 +13,118 @@ interface DownloadVideoMessage {
   formatId: number;
 }
 
-type ExtensionMessage = FetchVideoInfoMessage  | GetVideoUrlMessage | GetQualitiesMessage | DownloadVideoMessage;
+type ExtensionMessage =
+  | GetVideoUrlMessage
+  | FetchVideoInfoMessage
+  | DownloadVideoMessage;
 
-const BACKEND_URL = 'http://localhost:4000';
+const BACKEND_URL = import.meta.env.VITE_API_URL;
 
 chrome.runtime.onMessage.addListener(
   (message: ExtensionMessage, _, sendResponse) => {
-    console.log('Background received message:', message);
-    
+    console.log("Background received message:", message);
+
+    // Get current tab URL if on YouTube
     if (message.action === "getVideoUrl") {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const currentTab = tabs[0];
-        if (currentTab?.url && currentTab.url.includes('youtube.com/watch')) {
+        if (currentTab?.url && currentTab.url.includes("youtube.com/watch")) {
           sendResponse({ url: currentTab.url });
         } else {
-          sendResponse({ url: null, error: "Not on a YouTube video page" });
+          sendResponse({
+            url: null,
+            error: "Not on a YouTube video page",
+          });
         }
       });
       return true;
     }
 
-    if (message.action === "getQualities") {
+    // Fetch video info (title, channel, thumbnail, qualities)
+    if (message.action === "fetchVideoInfo") {
       const { url } = message;
       if (!url) {
-        sendResponse({ qualities: null, error: "URL is required" });
+        sendResponse({ success: false, error: "URL is required" });
         return;
       }
-      const apiUrl = `${BACKEND_URL}/api/video-info`;
+
+      const apiUrl = `${BACKEND_URL}/youtube/video-info`;
+
       (async () => {
         try {
+          console.log("Fetching video info from:", apiUrl);
+
           const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: url })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
           });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
           const data = await response.json();
-          const qualities = (data.formats || []).map((f: any) => ({
-            quality: f.quality,
+          console.log("Video info data:", data);
+
+          // Flatten formats
+          const allFormats = [
+            ...(data.formats?.combined || []),
+            ...(data.formats?.videoOnly || []),
+            ...(data.formats?.audioOnly || []),
+          ];
+
+          const qualities = allFormats.map((f: any) => ({
+            quality: f.quality || f.audioQuality || "unknown",
             formatId: parseInt(f.itag) || 0,
-            ext: f.ext,
-            hasVideo: true,
-            hasAudio: true
+            ext: f.ext || "mp4",
+            hasVideo:
+              !!f.hasVideo || f.type === "video" || f.type === "combined",
+            hasAudio:
+              !!f.hasAudio || f.type === "audio" || f.type === "combined",
           }));
-          sendResponse({ qualities });
+
+          const videoInfo = {
+            videoId: data.videoId,
+            title: data.title,
+            channel: data.channel,
+            duration: data.duration,
+            thumbnail: data.thumbnail,
+            viewCount: data.viewCount,
+            qualities,
+          };
+
+          sendResponse({ success: true, videoInfo });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-          sendResponse({ qualities: null, error: errorMessage });
+          console.error("Fetch video info error:", error);
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error occurred";
+          sendResponse({ success: false, error: errorMessage });
         }
       })();
+
       return true;
     }
-    
+
+    // Download video
     if (message.action === "downloadVideo") {
       const { url, formatId } = message;
       if (!url || !formatId) {
-        sendResponse({ status: "error", error: "URL and formatId are required" });
+        sendResponse({
+          status: "error",
+          error: "URL and formatId are required",
+        });
         return;
       }
-      const downloadUrl = `${BACKEND_URL}/api/download?url=${encodeURIComponent(url)}&itag=${formatId}`;
+      const downloadUrl = `${BACKEND_URL.replace(
+        "/api",
+        ""
+      )}/api/youtube/download?url=${encodeURIComponent(url)}&itag=${formatId}`;
       const videoId = (() => {
         try {
-          return new URL(url).searchParams.get('v') || 'video';
+          return new URL(url).searchParams.get("v") || "video";
         } catch {
-          return 'video';
+          return "video";
         }
       })();
       const filename = `${videoId}_${formatId}.mp4`;
@@ -89,75 +132,31 @@ chrome.runtime.onMessage.addListener(
         {
           url: downloadUrl,
           filename,
-          conflictAction: 'uniquify'
+          conflictAction: "uniquify",
         },
         (downloadId) => {
           if (chrome.runtime.lastError) {
-            console.error('Download failed:', chrome.runtime.lastError.message);
-            sendResponse({ status: "error", error: chrome.runtime.lastError.message });
+            console.error(
+              "Download failed:",
+              chrome.runtime.lastError.message
+            );
+            sendResponse({
+              status: "error",
+              error: chrome.runtime.lastError.message,
+            });
           } else {
             sendResponse({ status: "success", downloadId });
           }
         }
       );
-      return true; 
-    }
-    
-    
-    if (message.action === "fetchVideoInfo") {
-      const { videoId } = message;
-      
-      if (!videoId) {
-        sendResponse({ success: false, error: "Video ID is required" });
-        return;
-      }
-
-      // Construct YouTube URL from video ID
-      const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const apiUrl = `${BACKEND_URL}/api/video-info`;
-
-      (async () => {
-        try {
-          console.log('Fetching video info from:', apiUrl);
-          
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url: youtubeUrl })
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('Video info data:', data);
-          
-          // Transform the response to match DownloadModal expectations
-          const videoInfo = {
-            title: data.title || `Video ${videoId}`,
-            qualities: data.formats?.map((f: any) => f.quality) || []
-          };
-          
-          sendResponse({ success: true, videoInfo: videoInfo });
-        } catch (error) {
-          console.error('Fetch video info error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-          sendResponse({ success: false, error: errorMessage });
-        }
-      })();
-      
       return true;
     }
-    
-    // If no action matches, send error response
-    sendResponse({ success: false, error: 'Unknown action' });
+
+    // Unknown action
+    sendResponse({ success: false, error: "Unknown action" });
   }
 );
 
-// Extension installation handler
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('YouTube Downloader extension installed');
+  console.log("YouTube Downloader extension installed");
 });
