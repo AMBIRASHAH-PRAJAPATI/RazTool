@@ -1,66 +1,69 @@
 # RazTool Extension - Chrome Browser Extension
 
-A Chrome browser extension that seamlessly integrates YouTube video downloading functionality directly into YouTube pages.
+A Chrome browser extension that seamlessly integrates YouTube video downloading functionality directly into YouTube pages using the RazTool backend server.
 
 ## 🚀 Overview
 
-The RazTool Extension is a Chrome browser extension built with React and TypeScript that allows users to download YouTube videos with a single click. It injects download buttons directly into YouTube's interface and communicates with the RazTool backend server for video processing.
+RazTool Extension is a Chrome browser extension built with React and TypeScript. It injects download buttons directly into YouTube videos, allowing users to fetch video information and download content in various formats. The extension works by communicating with the local RazTool backend server for media processing.
 
 ## 🔧 Technologies Used
 
 - **Framework**: React 19.1.0
 - **Language**: TypeScript
 - **Build Tool**: Vite 7.0.4 with @crxjs/vite-plugin
-- **Extension APIs**: Chrome Extension Manifest V3
-- **Styling**: 
-  - TailwindCSS 4.1.11
-  - Tailwind Animate CSS
-- **Icons**: Lucide React
-- **Development**: ESLint, TypeScript ESLint
+- **Extension API**: Chrome Extension Manifest V3
+- **Styling**: TailwindCSS 4.1.11, Tailwind Animate CSS
+- **UI Icons**: Lucide React
+- **Linting**: ESLint, TypeScript ESLint
 
 ## 📁 Project Structure
 
 ```
 extension/
 ├── public/
-│   ├── manifest.json    # Extension manifest (Manifest V3)
-│   └── vite.svg        # Extension icon
+│   ├── manifest.json     # Chrome extension manifest (Manifest V3)
+│   ├── vite.svg          # Extension icon
 ├── src/
-│   ├── background.ts   # Service worker script
-│   ├── content.tsx     # Content script for YouTube integration
-│   ├── popup.tsx       # Extension popup interface
-│   └── utils/          # Utility functions
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── vite.config.ts      # Vite build configuration with CRX plugin
+│   ├── background.ts     # Service worker script
+│   ├── content.tsx       # Content script injected into YouTube
+│   ├── popup.tsx         # Extension popup interface
+│   └── utils/            # Utility functions
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript config
+├── vite.config.ts        # Vite build configuration (CRX plugin)
+├── .env                  # Extension environment variables
+└── README.md             # This file
 ```
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-
 - Node.js (v16 or higher)
 - npm or pnpm
-- Chrome browser
-- **Running RazTool server** (IMPORTANT: Start server first!)
+- Google Chrome browser
+- **RazTool backend server running (start /server first!)**
 
-### Install Dependencies
+### 1. Start the Backend Server (REQUIRED)
 
+```bash
+cd server
+npm install
+npm start
+```
+
+### 2. Install Extension Dependencies
 ```bash
 cd extension
 npm install
 ```
 
-### Environment Variables
-
+### 3. Configure Environment Variables
 Create a `.env` file in the extension directory:
-
-```env
+```
 VITE_API_BASE_URL=http://localhost:4000
 ```
 
-### Build the Extension
-
+### 4. Build the Extension
 ```bash
 npm run build
 ```
@@ -90,130 +93,59 @@ This creates a `dist/` folder with the compiled extension.
    - Select the `extension/dist` folder
    - The extension should now appear in your extensions list
 
-4. Verify Installation:
-   - Go to any YouTube video page
-   - You should see download buttons integrated into the YouTube interface
-   - Click the extension icon in the toolbar to access the popup interface
+### 6. Testing & Usage
+- Navigate to any YouTube video page
+- Download buttons should appear directly in the YouTube UI
+- Click to fetch video formats and initiate downloads
+- You can also use the extension popup via the extension icon in the toolbar
+
+*Note:* The backend server **must** be running first for the extension to work.
 
 ## 🎯 Features
 
-### Direct YouTube Integration
-- **Seamless UI Integration**: Download buttons appear directly on YouTube video pages
-- **One-click Downloads**: Download videos without leaving YouTube
-- **Format Selection**: Choose from available video qualities and formats
-- **Real-time Updates**: Buttons appear automatically on new videos
-
-### Extension Popup
-- **Video Information**: Display current video details
-- **Download Options**: Quality and format selection
-- **Quick Access**: Fast download without navigating away
-
-### Background Processing
-- **Service Worker**: Handles extension lifecycle and background tasks
-- **Message Passing**: Communication between content scripts and popup
-- **Storage**: User preferences and download history
+- **Direct YouTube Integration**: Download buttons injected into YouTube video pages
+- **One-Click Downloads**: Retrieve video information and download in multiple formats straight from the page
+- **Popup UI**: Access current video details and download controls from the extension's popup interface
+- **Format Selection**: Choose video quality and file type before download
+- **Background Processing**: Service worker handles API communication and download requests
+- **User Preferences**: Store preferences and download history (via Chrome extension storage API)
 
 ## 🔌 Extension Architecture
 
-### Manifest V3 Configuration (`public/manifest.json`)
-
-```json
-{
-  "manifest_version": 3,
-  "name": "YouTube Downloader",
-  "version": "1.0.0",
-  "description": "Download YouTube videos with a click.",
-  "permissions": [
-    "downloads",
-    "storage", 
-    "activeTab",
-    "tabs",
-    "scripting"
-  ],
-  "host_permissions": [
-    "https://www.youtube.com/*"
-  ],
-  "background": {
-    "service_worker": "src/background.ts",
-    "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["src/content.tsx"]
-    }
-  ],
-  "action": {
-    "default_popup": "index.html"
-  }
-}
-```
-
-### Content Script (`src/content.tsx`)
-- Injects download buttons into YouTube pages
-- Detects video URL changes
-- Handles user interactions
-- Communicates with background script
-
-### Background Script (`src/background.ts`)
-- Service worker for extension lifecycle
-- Handles API communications
-- Manages download requests
-- Storage operations
-
-### Popup Interface (`src/popup.tsx`)
-- React-based popup UI
-- Video information display
-- Download controls
-- Settings and preferences
-
-## 🔌 Server Communication
-
-The extension communicates with the RazTool server for video processing:
+### Chrome Manifest (V3)
+Defines permissions and extension scripts:
+- Service worker background (`src/background.ts`)
+- Content script for YouTube (`src/content.tsx`)
+- Popup interface (`index.html` -> `src/popup.tsx`)
+- Permissions: `downloads`, `storage`, `activeTab`, `tabs`, `scripting`, `host_permissions` for `https://www.youtube.com/*`
 
 ### API Integration
+Extension communicates with the RazTool server:
+- **Get video info:**
 ```typescript
-// Get video information
-const response = await fetch(`${API_BASE_URL}/api/youtube/video-info`, {
+fetch(`${API_BASE_URL}/api/youtube/video-info`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url: videoUrl })
+  body: JSON.stringify({ url: videoUrl }),
 });
-
-// Trigger download
+```
+- **Download:**
+```typescript
 window.open(`${API_BASE_URL}/api/youtube/download?url=${videoUrl}&itag=${format}`);
 ```
 
 ### Message Passing
-```typescript
-// Content script to background
-chrome.runtime.sendMessage({
-  action: 'downloadVideo',
-  url: videoUrl,
-  format: selectedFormat
-});
+- Content scripts communicate with the extension's background and popup scripts for download initiation and status updates
 
-// Background to content script
-chrome.tabs.sendMessage(tabId, {
-  action: 'updateDownloadButton',
-  status: 'downloading'
-});
-```
-
-## 🚦 Development
-
-### Available Scripts
+## 🚦 Development Scripts
 
 ```bash
-# Start development mode with hot reload
+# Start development (hot reload)
 npm run dev
-
 # Build for production
 npm run build
-
 # Lint code
 npm run lint
-
 # Preview built extension
 npm run preview
 ```
@@ -264,41 +196,24 @@ The extension requires these permissions:
 
 ## 🐛 Troubleshooting
 
-### Common Issues
-
-1. **Extension not loading**: 
-   - Ensure you built the extension (`npm run build`)
+1. **Extension Not Loading**
+   - Ensure you built the extension with `npm run build`
    - Check Chrome DevTools console for errors
    - Verify manifest.json is valid
 
-2. **Download buttons not appearing**:
-   - Make sure the backend server is running on port 4000
-   - Check content script console for errors
-   - Verify YouTube page URL matches manifest permissions
+2. **Download Buttons Missing**
+   - Backend server not running on port 4000
+   - Content script has errors (check dev console)
+   - YouTube page URL must match permissions
 
-3. **API connection failed**:
-   - Confirm server is running: `http://localhost:4000`
-   - Check CORS configuration in server
-   - Verify API_BASE_URL in extension environment
+3. **API Connection Failure**
+   - Verify backend server is up and API_BASE_URL is correct
+   - Server must have proper CORS config
 
-4. **Downloads not working**:
-   - Ensure Chrome download permissions are granted
-   - Check if video is available for download
-   - Verify server API endpoints are responding
-
-### Debug Mode
-
-Enable extension debugging:
-1. Right-click extension icon → "Inspect popup"
-2. Go to `chrome://extensions/` → Click "Inspect views: background page"
-3. On YouTube pages, open DevTools to debug content script
-
-### Console Logging
-
-Add debug logging to track extension behavior:
-```typescript
-console.log('[RazTool Extension] Action:', action, data);
-```
+4. **Downloads Not Working**
+   - Chrome download permissions required
+   - Video must be available for download
+   - Server endpoints must be accessible
 
 ## 📦 Build Process
 
@@ -336,44 +251,33 @@ npm run build
 
 ## ⚠️ Important Setup Notes
 
-### Critical Setup Order:
+- **Critical Setup Order:**
+  1. Start the backend server in `/server`
+  2. Build the extension
+  3. Load extension in Chrome
+- **Extension requires backend server**: Will not function standalone
+- **Always test with various YouTube videos to confirm functionality**
 
-1. **Start Backend Server First**:
-   ```bash
-   cd server
-   npm install
-   npm start
-   ```
+## 🏗️ Contributing
 
-2. **Then Build and Install Extension**:
-   ```bash
-   cd extension
-   npm install
-   npm run build
-   ```
+1. Fork the repository
+2. Add features or fix bugs via a branch
+3. Test changes in Chrome with hot reload or production build
+4. Submit PR with documentation updates
 
-3. **Load Extension in Chrome**: Follow installation steps above
+## 📦 Key Dependencies
 
-### Server Dependency
+- React 19.1.0, React / TypeScript
+- @crxjs/vite-plugin
+- TailwindCSS 4.1.11
+- Lucide React icons
+- Chrome Extension Manifest V3
 
-The extension **requires** the RazTool server to be running:
-- Server provides video processing APIs
-- Extension cannot function without backend
-- Always start server before using extension
+## ⚠️ Disclaimer
 
-### Testing Checklist
-
-- [ ] Backend server running on port 4000
-- [ ] Extension built and loaded in Chrome
-- [ ] Download buttons appear on YouTube videos
-- [ ] Popup opens and displays video information
-- [ ] Downloads complete successfully
-- [ ] No console errors in content script or popup
+For educational and personal use only. Respect YouTube's terms of service.
 
 ## 🔐 Security Considerations
-
-- Content scripts run in isolated environment
-- API communications use HTTPS in production
-- No sensitive data stored in extension storage
+- Content scripts run in isolation
+- API communications should use HTTPS in production
 - Follows Chrome extension security best practices
-- Manifest V3 compliance for enhanced security

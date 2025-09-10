@@ -4,52 +4,44 @@ A modern React-based web application for downloading YouTube and Instagram conte
 
 ## 🚀 Overview
 
-The RazTool Client is a single-page application (SPA) built with React and TypeScript that provides an intuitive web interface for downloading media content. It communicates with the RazTool server backend to process and download videos from various platforms.
+RazTool Client is a single-page application (SPA) built with React and TypeScript. It provides an intuitive front-end for users to download media content from YouTube and Instagram by connecting directly to the RazTool server backend. Features include multi-format support, responsive design, and real-time feedback for media download operations.
 
 ## 🔧 Technologies Used
 
 - **Framework**: React 19.1.0
 - **Language**: TypeScript
 - **Build Tool**: Vite 7.0.4
-- **Styling**: 
-  - TailwindCSS 4.1.12
-  - Tailwind Animate CSS
-- **UI Components**: 
-  - Radix UI (Accordion, Avatar, Separator, Slot, Tabs)
-  - Lucide React (Icons)
-  - Class Variance Authority
+- **Styling**: TailwindCSS 4.1.12, Tailwind Animate CSS
+- **UI Components**: Radix UI (Accordion, Avatar, Separator, Slot, Tabs), Lucide React (icons), Class Variance Authority
 - **Routing**: React Router DOM
-- **Development**: ESLint, TypeScript ESLint
+- **Development Tools**: ESLint, TypeScript ESLint
 
 ## 📁 Project Structure
 
 ```
 Client/
-├── public/              # Static assets
+├── public/            # Static assets
 ├── src/
-│   ├── components/      # Reusable UI components
-│   ├── page/           # Page components
-│   │   ├── youtube.tsx
-│   │   └── instagram.tsx
-│   ├── lib/            # Utility libraries
-│   ├── App.tsx         # Main application component
-│   ├── api.ts          # API communication layer
-│   ├── utils.ts        # Utility functions
-│   ├── main.tsx        # Application entry point
-│   └── index.css       # Global styles
-├── components.json     # Shadcn UI configuration
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── vite.config.ts      # Vite build configuration
+│   ├── components/    # Reusable UI components
+│   ├── page/          # Page components (YouTube and Instagram)
+│   ├── lib/           # Utility libraries
+│   ├── App.tsx        # Main application component
+│   ├── api.ts         # API communication layer
+│   ├── utils.ts       # Utility functions
+│   ├── main.tsx       # Application entry point
+│   └── index.css      # Global styles
+├── components.json    # Shadcn UI configuration
+├── package.json       # Dependencies and scripts
+├── tsconfig.json      # TypeScript configuration
+└── vite.config.ts     # Vite build config
 ```
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-
 - Node.js (v16 or higher)
 - npm, pnpm, or yarn
-- Running RazTool server (see server documentation)
+- Running RazTool server on port 4000 (see server README)
 
 ### Install Dependencies
 
@@ -61,8 +53,7 @@ npm install
 ### Environment Variables
 
 Create a `.env` file in the Client directory:
-
-```env
+```
 VITE_API_BASE_URL=http://localhost:4000
 ```
 
@@ -71,17 +62,14 @@ VITE_API_BASE_URL=http://localhost:4000
 ```bash
 npm run dev
 ```
-
-The application will be available at `http://localhost:5173`
+Application will be available at `http://localhost:5173`
 
 ### Build for Production
-
 ```bash
 npm run build
 ```
 
 ### Preview Production Build
-
 ```bash
 npm run preview
 ```
@@ -89,214 +77,127 @@ npm run preview
 ## 🎯 Features
 
 ### Multi-Platform Support
-- **YouTube Downloads**: Video information fetching and download in multiple formats
+- **YouTube Downloads**: Fetch video info and download in multiple formats
 - **Instagram Downloads**: Support for posts, reels, stories, and highlights
-- **Format Selection**: Choose from various video qualities and formats
+- **Format Selection**: User can choose video quality and format
 
 ### Modern UI/UX
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **Clean Interface**: Modern, minimal design with TailwindCSS
-- **Component Library**: Consistent UI components using Radix UI
-- **Dark/Light Mode**: Theme support (if implemented)
-- **Icons**: Beautiful icons from Lucide React
+- Responsive design for desktop & mobile
+- Minimal, clean interface with TailwindCSS
+- Consistent component library via Radix UI
+- Lucide React icon support
+- Light/Dark mode (if implemented)
 
 ### User Experience
-- **Real-time Feedback**: Loading states and progress indicators
-- **Error Handling**: Friendly error messages and validation
-- **URL Validation**: Input validation for platform URLs
-- **Download Progress**: Visual feedback during download process
+- Real-time feedback (loading states, progress)
+- Robust error handling and validation
+- URL validation for supported platforms
+- Download progress indicator
 
 ## 🧩 Component Architecture
 
 ### Page Components
 
-#### YouTube Page (`src/page/youtube.tsx`)
+#### YouTube (`src/page/youtube.tsx`)
 - URL input and validation
 - Video information display
-- Format selection interface
+- Format selection
 - Download functionality
 
-#### Instagram Page (`src/page/instagram.tsx`)
+#### Instagram (`src/page/instagram.tsx`)
 - Instagram URL processing
 - Content type detection
 - Media preview and download
 
 ### Shared Components (`src/components/`)
-- **Navbar**: Navigation component
-- **UI Components**: Reusable interface elements
-- **Form Elements**: Input fields, buttons, selectors
+- Navbar for easy navigation
+- Reusable UI/form elements
 
 ### API Layer (`src/api.ts`)
 - HTTP client configuration
-- API endpoint definitions
-- Request/response handling
+- API endpoint logic for server communication
 - Error management
 
 ## 🔌 API Integration
 
-The client communicates with the RazTool server through REST API calls:
+Communicates with RazTool backend at `VITE_API_BASE_URL`.
 
-### YouTube API Calls
+### Sample YouTube API Usage
 ```typescript
 // Get video information
 const response = await fetch('/api/youtube/video-info', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url: videoUrl })
+  body: JSON.stringify({ url: videoUrl }),
 });
 
 // Download video
 window.open(`/api/youtube/download?url=${videoUrl}&itag=${selectedFormat}`);
 ```
 
-### Instagram API Calls
+### Sample Instagram API Usage
 ```typescript
-// Get content information
 const response = await fetch('/api/instagram/content-info', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url: instagramUrl })
+  body: JSON.stringify({ url: instagramUrl }),
 });
 ```
 
 ## 🎨 Styling & Theming
 
-### TailwindCSS Configuration
-The project uses TailwindCSS 4.x with:
-- Custom color palette
-- Responsive breakpoints
-- Animation utilities
-- Component variants
+- Uses TailwindCSS 4.x for utility-first styling
+- Animation and transitions with Tailwind Animate CSS
+- Component variants managed via Class Variance Authority
 
-### Component Styling
-- **Utility-first**: TailwindCSS classes for styling
-- **Component Variants**: Class Variance Authority for component variants
-- **Responsive Design**: Mobile-first responsive utilities
-- **Animations**: Smooth transitions and hover effects
-
-### Shadcn UI Integration
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "default",
-  "rsc": false,
-  "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.js",
-    "css": "src/index.css"
-  }
-}
-```
-
-## 🚦 Development
-
-### Available Scripts
+## 🚦 Development Scripts
 
 ```bash
-# Start development server
+# Start development
 npm run dev
-
 # Build for production
 npm run build
-
 # Lint code
 npm run lint
-
 # Preview production build
 npm run preview
 ```
 
-### Development Workflow
-
-1. **Component Development**: Create new components in `src/components/`
-2. **Page Development**: Add new pages in `src/page/`
-3. **API Integration**: Update `src/api.ts` for new endpoints
-4. **Styling**: Use TailwindCSS utilities and Radix UI components
-5. **Type Safety**: Ensure proper TypeScript typing
-
-### Code Quality
-
-- **ESLint**: Code linting and formatting
-- **TypeScript**: Type checking and IntelliSense
-- **React Hooks**: Modern React patterns
-- **Component Composition**: Reusable component architecture
-
-## 🔧 Configuration Files
-
-### Vite Configuration (`vite.config.ts`)
-```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    port: 5173
-  }
-})
-```
-
-### TypeScript Configuration
-- `tsconfig.json`: Main TypeScript configuration
-- `tsconfig.app.json`: Application-specific settings
-- `tsconfig.node.json`: Node.js environment settings
-
 ## 🐛 Troubleshooting
 
-### Common Issues
+1. **Server Connection Error**: Make sure backend server is running.
+2. **CORS Issues**: Server's CORS config must include client origin.
+3. **Build Errors**: Clear node_modules and reinstall.
+4. **Style Issues**: Ensure Tailwind is setup correctly.
+5. **Debug Mode**: Use React DevTools; check browser console for API/network errors.
 
-1. **Server Connection Error**: Ensure the backend server is running on port 4000
-2. **CORS Issues**: Check server CORS configuration includes the client origin
-3. **Build Errors**: Clear `node_modules` and reinstall dependencies
-4. **Style Issues**: Ensure TailwindCSS is properly configured
+## 📦 Key Dependencies
 
-### Debug Mode
-
-Enable React DevTools and browser developer tools for debugging:
-- Components tree inspection
-- State and props monitoring
-- Network request analysis
-- Console error tracking
-
-## 📦 Dependencies Overview
-
-### Production Dependencies
-- **react**: Core React library
-- **react-dom**: React DOM rendering
-- **@radix-ui/***: UI component primitives
-- **lucide-react**: Icon library
-- **tailwindcss**: Utility-first CSS framework
-- **class-variance-authority**: Component variant management
-
-### Development Dependencies
-- **vite**: Build tool and dev server
-- **typescript**: Type checking
-- **eslint**: Code linting
-- **@types/***: TypeScript type definitions
+- React 19.1.0, React-DOM
+- TailwindCSS 4.1.12
+- Radix UI, Lucide React icons
+- Vite 7.0.4
+- ESLint, TypeScript
 
 ## 🚀 Deployment
 
-### Production Build
-```bash
-npm run build
-```
-
-### Deployment Options
-- **Static Hosting**: Netlify, Vercel, GitHub Pages
-- **CDN**: CloudFlare, AWS CloudFront
-- **Traditional Hosting**: Apache, Nginx
-
-### Environment Configuration
-Update environment variables for production:
-```env
-VITE_API_BASE_URL=https://your-production-server.com
-```
+- Static hosting: Netlify, Vercel, GitHub Pages
+- CDN: Cloudflare, AWS CloudFront
+- Traditional hosting: Apache, Nginx
 
 ## ⚠️ Important Notes
 
-- Ensure the backend server is running before starting the client
-- Configure API base URL properly for different environments
-- Test all functionality after building for production
-- Monitor console for any JavaScript errors
-- Keep dependencies updated for security and performance
+- Backend server must be running before starting the client.
+- API base URL in `.env` must be set properly.
+- Always test downloads across multiple formats/platforms after deploying.
+- Keep dependencies updated for security and performance.
+
+## 🏗️ Contributing
+
+1. Fork repository, create feature branch
+2. Add or modify components/features
+3. Test via development server
+4. Submit PR with documentation updates
+
+## 📖 For More Details
+See [Server Documentation](../server/README.md) and [Extension Documentation](../extension/README.md)
