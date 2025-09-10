@@ -109,6 +109,7 @@ Then load the extension in Chrome:
                     /api/youtube/video-info
                     /api/youtube/download
                     /api/instagram/content-info
+                    /api/instagram/download
 ```
 
 ### Communication Flow
@@ -289,10 +290,6 @@ NODE_ENV=development npm start
 ### Extension
 - React 19, TypeScript, Chrome Extension APIs
 - @crxjs/vite-plugin, TailwindCSS, Lucide React
-
-## 📄 License
-
-This project is licensed under the ISC License.
 
 ## ⚠️ Important Notes
 
