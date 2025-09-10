@@ -13,8 +13,6 @@ The RazTool server is a RESTful API built with Express.js and TypeScript that ha
 - **Language**: TypeScript
 - **Media Processing**: 
   - `@nuclearplayer/ytdl-core` - YouTube video processing
-  - `@sasmeee/igdl` - Instagram content extraction
-  - `insta-fetcher` - Additional Instagram functionality
   - `puppeteer` - Web scraping capabilities
 - **HTTP Client**: Axios
 - **Security**: CORS, Express Rate Limiting
