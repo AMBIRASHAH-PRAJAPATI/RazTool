@@ -7,7 +7,6 @@ export class YoutubeController {
    * Get video content information 
    */
   static async getVideoInfo(req: Request, res: Response) {
-    console.log("Hit /video-info");
     const { url } = req.body;
     if (!url || typeof url !== 'string')
       return res.status(400).json({ error: 'Invalid YouTube URL' });
@@ -77,7 +76,6 @@ export class YoutubeController {
           : ''
       });
     } catch (err) {
-      console.error('Error [video-info]:', err);
       return res.status(500).json({ error: 'Could not fetch video info' });
     }
   };
@@ -128,7 +126,6 @@ export class YoutubeController {
       });
 
       downloadStream.on('error', (err) => {
-        console.error('Download stream error:', err);
         if (!res.writableEnded) {
           res.status(500).end('Download failed.');
         }
@@ -143,7 +140,6 @@ export class YoutubeController {
       downloadStream.pipe(res);
 
     } catch (err) {
-      console.error('Download error:', err);
       return res.status(500).send('Server error');
     }
   };
